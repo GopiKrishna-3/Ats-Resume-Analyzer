@@ -3,7 +3,7 @@
 An enterprise-grade, AI-powered Applicant Tracking System (ATS) optimization tool. Built with Python, Flask, and the **Google Gemini API**, this application provides a rigorous, evidence-based evaluation of resumes against targeted job descriptions to identify precise skill alignments and critical gaps.
 
 ## 🚀 Live Demo
-**https://ats-resume-analyzer-d3d1.onrender.com/**
+**https://ats-resume-analyzer-3-w4s2.onrender.com/**
 
 ---
 

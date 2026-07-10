@@ -229,7 +229,11 @@ def analyze_resume():
     except ValueError as e:
         return jsonify({"error": str(e)}), 502
     except RuntimeError as e:
-        return jsonify({"error": str(e)}), 502
+        error_msg = str(e)
+        if "429" in error_msg or "quota" in error_msg.lower() or "exhausted" in error_msg.lower():
+            friendly_msg = "Our AI is currently taking a breather! We've hit our free-tier limits. Please wait 60 seconds and try again."
+            return jsonify({"error": friendly_msg}), 429
+        return jsonify({"error": error_msg}), 502
 
     return jsonify(result), 200
 

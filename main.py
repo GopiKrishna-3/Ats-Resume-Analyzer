@@ -231,7 +231,7 @@ def analyze_resume():
     except RuntimeError as e:
         error_msg = str(e)
         if "429" in error_msg or "quota" in error_msg.lower() or "exhausted" in error_msg.lower():
-            friendly_msg = "Our AI is currently taking a breather! We've hit our free-tier limits. Please wait 60 seconds and try again."
+            friendly_msg = f"Our AI is currently taking a breather! We've hit our free-tier limits. Please wait 60 seconds and try again. [DEBUG RAW ERROR: {error_msg}]"
             return jsonify({"error": friendly_msg}), 429
         return jsonify({"error": error_msg}), 502
 

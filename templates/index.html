@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ATS Resume Analyzer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #21253a;
+      --border: rgba(255,255,255,0.07);
+      --accent: #6366f1;
+      --accent-glow: rgba(99,102,241,0.25);
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --muted: #6b7280;
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --trans: 200ms ease;
+    }
+
+    html, body {
+      min-height: 100vh;
+      background: var(--bg);
+      font-family: "Inter", system-ui, sans-serif;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ── */
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px 64px;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-brand { display: flex; align-items: center; gap: 14px; }
+    .logo {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 15px; color: #fff;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .header h1 { font-size: 17px; font-weight: 700; color: var(--text); }
+    .header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .header-tag {
+      font-size: 11px; font-weight: 600; color: var(--accent);
+      background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);
+      padding: 4px 10px; border-radius: 999px; letter-spacing: 0.5px;
+    }
+
+    /* ── Main grid ── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .card-title {
+      font-size: 13px; font-weight: 600; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 0.6px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Upload form ── */
+    .drop-zone {
+      border: 1.5px dashed rgba(99,102,241,0.3);
+      border-radius: var(--radius-sm);
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color var(--trans), background var(--trans);
+      background: rgba(99,102,241,0.03);
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(99,102,241,0.07);
+    }
+    .drop-icon {
+      width: 40px; height: 40px; margin: 0 auto 10px;
+      background: rgba(99,102,241,0.12); border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .drop-title { font-size: 14px; font-weight: 600; color: var(--text); }
+    .drop-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .drop-filename {
+      margin-top: 10px; font-size: 13px; color: var(--accent);
+      font-weight: 500; display: none;
+    }
+    input[type="file"] { display: none; }
+
+    .field-label {
+      font-size: 12px; font-weight: 600; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      display: block; margin-bottom: 8px;
+    }
+    textarea {
+      width: 100%; min-height: 130px; resize: vertical;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px;
+      font-size: 13px; color: var(--text); font-family: inherit;
+      transition: border-color var(--trans), box-shadow var(--trans);
+      line-height: 1.6;
+    }
+    textarea::placeholder { color: var(--muted); }
+    textarea:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .form-footer { display: flex; gap: 10px; align-items: center; justify-content: flex-end; margin-top: 16px; }
+    .form-hint { font-size: 12px; color: var(--muted); flex: 1; }
+
+    .btn {
+      padding: 9px 20px; border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      border: none; transition: all var(--trans); font-family: inherit;
+    }
+    .btn-primary {
+      background: var(--accent); color: #fff;
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+    .btn-primary:hover { background: #4f52e8; box-shadow: 0 0 24px var(--accent-glow); }
+    .btn-ghost {
+      background: transparent; color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+    .btn[disabled] { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+    #formStatus { min-height: 20px; margin-top: 12px; font-size: 13px; }
+    .msg-ok  { color: var(--green); }
+    .msg-err { color: var(--red); }
+
+    /* ── Score card ── */
+    .score-card {
+      display: flex; gap: 24px; align-items: center;
+      background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.04));
+      border: 1px solid rgba(99,102,241,0.15);
+      border-radius: var(--radius); padding: 24px; margin-bottom: 20px;
+    }
+    .meter { position: relative; width: 110px; height: 110px; flex-shrink: 0; }
+    .meter svg { transform: rotate(-90deg); }
+    .meter-label {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .meter-num { font-size: 24px; font-weight: 700; color: var(--text); }
+    .meter-unit { font-size: 11px; color: var(--muted); margin-top: -2px; }
+    .score-info { flex: 1; }
+    .score-heading { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .score-reasoning { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+    .score-tag {
+      display: inline-block; margin-top: 10px;
+      font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px;
+    }
+    .tag-high  { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+    .tag-mid   { background: rgba(245,158,11,0.12); color: var(--yellow); border: 1px solid rgba(245,158,11,0.2); }
+    .tag-low   { background: rgba(239,68,68,0.12);  color: var(--red);    border: 1px solid rgba(239,68,68,0.2); }
+
+    /* progress bar */
+    .progress-wrap { margin-top: 14px; }
+    .progress-track {
+      height: 6px; background: rgba(255,255,255,0.06);
+      border-radius: 999px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; width: 0%; border-radius: 999px;
+      transition: width 600ms cubic-bezier(.2,.9,.2,1);
+    }
+    .progress-labels {
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: var(--muted); margin-top: 5px;
+    }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 4px; margin-bottom: 16px; background: var(--surface2); border-radius: var(--radius-sm); padding: 4px; }
+    .tab {
+      flex: 1; padding: 8px 10px; font-size: 12px; font-weight: 600;
+      color: var(--muted); background: transparent; border: none;
+      border-radius: 6px; cursor: pointer; transition: all var(--trans);
+      font-family: inherit; text-align: center;
+    }
+    .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Skill list ── */
+    .skill-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .skill-item {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 11px 13px;
+    }
+    .skill-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .skill-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .badge {
+      font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .badge-must  { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+    .badge-nice  { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
+    .skill-sub {
+      font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.5;
+    }
+    .skill-evidence {
+      font-size: 12px; color: var(--text-dim); margin-top: 6px;
+      border-left: 2px solid rgba(99,102,241,0.4); padding-left: 8px;
+      font-style: italic; line-height: 1.5;
+    }
+
+    /* ── Plain list (weaknesses / suggestions) ── */
+    .plain-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .plain-item {
+      font-size: 13px; color: var(--text-dim); line-height: 1.6;
+      padding: 10px 12px; border-radius: var(--radius-sm);
+      background: var(--surface2); border: 1px solid var(--border);
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .plain-item::before {
+      content: ''; flex-shrink: 0; width: 5px; height: 5px;
+      border-radius: 50%; margin-top: 7px;
+    }
+    .weakness-item::before { background: var(--red); }
+    .suggest-item::before  { background: var(--accent); }
+    .empty-state { font-size: 13px; color: var(--muted); padding: 12px 0; }
+
+    /* ── Raw JSON panel ── */
+    .raw-box {
+      background: #0d1117; border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 14px; font-size: 12px; color: #7dd3fc; font-family: "Fira Code", monospace;
+      white-space: pre-wrap; max-height: 340px; overflow: auto; line-height: 1.6;
+    }
+
+    /* ── Loading overlay ── */
+    .overlay {
+      position: fixed; inset: 0; display: none;
+      align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.7); z-index: 99; backdrop-filter: blur(4px);
+    }
+    .overlay.show { display: flex; }
+    .loader-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 32px 40px; text-align: center;
+    }
+    .loader-spinner {
+      width: 40px; height: 40px; border: 3px solid rgba(99,102,241,0.2);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-text { font-size: 14px; font-weight: 600; color: var(--text); }
+    .loader-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Fade in ── */
+    .fade { opacity: 0; transform: translateY(8px); transition: opacity 300ms ease, transform 300ms ease; }
+    .fade.in { opacity: 1; transform: none; }
+  </style>
+</head>
+
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="logo">ATS</div>
+      <div>
+        <h1>ATS Resume Analyzer</h1>
+        <p>Evidence-based resume scoring powered by Gemini 2.5 Flash</p>
+      </div>
+    </div>
+    <span class="header-tag">AI-POWERED</span>
+  </header>
+
+  <!-- Main grid -->
+  <div class="main-grid">
+
+    <!-- Left: Upload form -->
+    <div class="card">
+      <div class="card-title">Upload &amp; Analyze</div>
+
+      <form id="uploadForm" enctype="multipart/form-data" novalidate>
+
+        <!-- Drop zone -->
+        <label class="drop-zone" id="dropZone" for="resume">
+          <div class="drop-icon">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#6366f1" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+            </svg>
+          </div>
+          <div class="drop-title">Drop your PDF here</div>
+          <div class="drop-sub">or click to browse — max 5 MB</div>
+          <div class="drop-filename" id="fileName"></div>
+          <input type="file" id="resume" name="resume" accept="application/pdf" />
+        </label>
+
+        <!-- JD textarea -->
+        <div style="margin-top: 18px;">
+          <label class="field-label" for="job_description">Job Description</label>
+          <textarea id="job_description" name="job_description"
+            placeholder="Paste the full job description here…"></textarea>
+        </div>
+
+        <!-- Footer -->
+        <div class="form-footer">
+          <span class="form-hint">PDF only • results in ~10s</span>
+          <button type="reset" class="btn btn-ghost" id="resetBtn">Clear</button>
+          <button type="submit" class="btn btn-primary" id="analyzeBtn">Analyze →</button>
+        </div>
+
+        <div id="formStatus"></div>
+      </form>
+    </div>
+
+    <!-- Right: Results -->
+    <div id="resultsCol">
+
+      <!-- Score card -->
+      <div class="score-card fade" id="scoreCard">
+        <div class="meter">
+          <svg width="110" height="110" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" stroke="rgba(255,255,255,0.05)" stroke-width="10" fill="none"/>
+            <circle id="meterArc" cx="60" cy="60" r="50"
+              stroke="var(--accent)" stroke-width="10" stroke-linecap="round"
+              fill="none" stroke-dasharray="314.16" stroke-dashoffset="314.16"
+              style="transition: stroke-dashoffset 700ms cubic-bezier(.2,.9,.2,1), stroke 400ms ease;"/>
+          </svg>
+          <div class="meter-label">
+            <span class="meter-num" id="scoreNum">—</span>
+            <span class="meter-unit" id="scoreUnit"></span>
+          </div>
+        </div>
+        <div class="score-info">
+          <div class="score-heading">ATS Match Score</div>
+          <div class="score-reasoning" id="scoreReasoning">Upload a resume and job description to begin.</div>
+          <span id="scoreTag"></span>
+          <div class="progress-wrap">
+            <div class="progress-track">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-labels"><span>0</span><span>100</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Insights tabs card -->
+      <div class="card fade" id="insightsCard" style="margin-bottom: 20px;">
+        <div class="card-title">Insights</div>
+
+        <div class="tabs" role="tablist">
+          <button class="tab active" role="tab" data-tab="missing">Missing Skills</button>
+          <button class="tab" role="tab" data-tab="matching">Matching Skills</button>
+          <button class="tab" role="tab" data-tab="weaknesses">Weaknesses</button>
+          <button class="tab" role="tab" data-tab="suggestions">Suggestions</button>
+        </div>
+
+        <div id="tab-missing" class="tab-panel active">
+          <div id="missingList" class="empty-state">Run an analysis to see results.</div>
+        </div>
+        <div id="tab-matching" class="tab-panel">
+          <div id="matchingList" class="empty-state">Run an analysis to see results.</div>
+        </div>
+        <div id="tab-weaknesses" class="tab-panel">
+          <div id="weaknessList" class="empty-state">Run an analysis to see results.</div>
+        </div>
+        <div id="tab-suggestions" class="tab-panel">
+          <div id="suggestList" class="empty-state">Run an analysis to see results.</div>
+        </div>
+      </div>
+
+      <!-- Raw JSON card -->
+      <div class="card fade" id="rawCard">
+        <div class="card-title" style="margin-bottom:12px;">Raw JSON Response</div>
+        <pre class="raw-box" id="rawAnalysis">Results will appear here after analysis.</pre>
+      </div>
+
+    </div><!-- /resultsCol -->
+  </div><!-- /main-grid -->
+</div><!-- /page -->
+
+<!-- Loading overlay -->
+<div class="overlay" id="loadingOverlay" aria-hidden="true">
+  <div class="loader-box">
+    <div class="loader-spinner"></div>
+    <div class="loader-text">Analyzing resume…</div>
+    <div class="loader-sub">This may take 10–15 seconds</div>
+  </div>
+</div>
+
+<script>
+  /* ── Element refs ── */
+  const resumeInput   = document.getElementById('resume');
+  const fileNameEl    = document.getElementById('fileName');
+  const dropZone      = document.getElementById('dropZone');
+  const uploadForm    = document.getElementById('uploadForm');
+  const analyzeBtn    = document.getElementById('analyzeBtn');
+  const resetBtn      = document.getElementById('resetBtn');
+  const loadingOverlay= document.getElementById('loadingOverlay');
+  const formStatus    = document.getElementById('formStatus');
+
+  const scoreNum      = document.getElementById('scoreNum');
+  const scoreUnit     = document.getElementById('scoreUnit');
+  const scoreReasoning= document.getElementById('scoreReasoning');
+  const scoreTag      = document.getElementById('scoreTag');
+  const meterArc      = document.getElementById('meterArc');
+  const progressFill  = document.getElementById('progressFill');
+
+  const missingList   = document.getElementById('missingList');
+  const matchingList  = document.getElementById('matchingList');
+  const weaknessList  = document.getElementById('weaknessList');
+  const suggestList   = document.getElementById('suggestList');
+  const rawAnalysis   = document.getElementById('rawAnalysis');
+
+  /* ── Fade in on load ── */
+  window.addEventListener('load', () => {
+    setTimeout(() => document.querySelectorAll('.fade').forEach(e => e.classList.add('in')), 60);
+  });
+
+  /* ── Drag & drop ── */
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') {
+      const dt = new DataTransfer(); dt.items.add(f);
+      resumeInput.files = dt.files;
+      showFileName(f);
+    }
+  });
+
+  resumeInput.addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (f) showFileName(f);
+  });
+
+  function showFileName(f) {
+    fileNameEl.textContent = f.name + '  •  ' + (f.size / 1024).toFixed(0) + ' KB';
+    fileNameEl.style.display = 'block';
+  }
+
+  /* ── Tabs ── */
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  /* ── Loading state ── */
+  function setLoading(on) {
+    loadingOverlay.classList.toggle('show', on);
+    loadingOverlay.setAttribute('aria-hidden', !on);
+    analyzeBtn.disabled = on;
+  }
+
+  /* ── Score rendering ── */
+  function setScore(pct) {
+    const r = 50, circ = 2 * Math.PI * r;
+    meterArc.style.strokeDashoffset = (circ * (1 - pct / 100)).toFixed(2);
+    scoreNum.textContent = pct;
+    scoreUnit.textContent = '/ 100';
+
+    if (pct >= 75) {
+      meterArc.style.stroke = '#22c55e';
+      progressFill.style.background = 'linear-gradient(90deg,#22c55e,#4ade80)';
+      scoreTag.innerHTML = '<span class="score-tag tag-high">High Match</span>';
+    } else if (pct >= 50) {
+      meterArc.style.stroke = '#f59e0b';
+      progressFill.style.background = 'linear-gradient(90deg,#f59e0b,#fbbf24)';
+      scoreTag.innerHTML = '<span class="score-tag tag-mid">Medium Match</span>';
+    } else {
+      meterArc.style.stroke = '#ef4444';
+      progressFill.style.background = 'linear-gradient(90deg,#ef4444,#f87171)';
+      scoreTag.innerHTML = '<span class="score-tag tag-low">Low Match</span>';
+    }
+    progressFill.style.width = pct + '%';
+  }
+
+  /* ── HTML escape ── */
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, m =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  /* ── Render insights ── */
+  function renderInsights(data) {
+    /* Invalid JD */
+    if (!data.valid_input) {
+      scoreNum.textContent = '—';
+      scoreUnit.textContent = '';
+      scoreReasoning.textContent = data.validation_note || 'Job description could not be validated.';
+      scoreTag.innerHTML = '<span class="score-tag tag-low">Invalid JD</span>';
+      missingList.innerHTML = '<div class="empty-state">Analysis skipped — fix the job description and retry.</div>';
+      matchingList.innerHTML = '<div class="empty-state">—</div>';
+      weaknessList.innerHTML = '<div class="empty-state">—</div>';
+      suggestList.innerHTML  = '<div class="empty-state">—</div>';
+      rawAnalysis.textContent = JSON.stringify(data, null, 2);
+      return;
+    }
+
+    setScore(data.match_score ?? 0);
+    if (data.score_reasoning) scoreReasoning.textContent = data.score_reasoning;
+
+    /* Missing skills */
+    missingList.innerHTML = data.missing_skills?.length
+      ? '<ul class="skill-list">' + data.missing_skills.map(s => `
+          <li class="skill-item">
+            <div class="skill-top">
+              <span class="badge ${s.importance === 'must-have' ? 'badge-must' : 'badge-nice'}">${esc(s.importance)}</span>
+              <span class="skill-name">${esc(s.skill)}</span>
+            </div>
+            ${s.why_it_matters ? `<div class="skill-sub">${esc(s.why_it_matters)}</div>` : ''}
+          </li>`).join('') + '</ul>'
+      : '<div class="empty-state">No missing skills — resume covers the JD well.</div>';
+
+    /* Matching skills */
+    matchingList.innerHTML = data.matching_skills?.length
+      ? '<ul class="skill-list">' + data.matching_skills.map(s => `
+          <li class="skill-item">
+            <div class="skill-top">
+              <span class="badge ${s.importance === 'must-have' ? 'badge-must' : 'badge-nice'}">${esc(s.importance)}</span>
+              <span class="skill-name">${esc(s.skill)}</span>
+            </div>
+            ${s.evidence ? `<div class="skill-evidence">${esc(s.evidence)}</div>` : ''}
+          </li>`).join('') + '</ul>'
+      : '<div class="empty-state">No matching skills found.</div>';
+
+    /* Weaknesses */
+    weaknessList.innerHTML = data.weaknesses?.length
+      ? '<ul class="plain-list">' + data.weaknesses.map(s =>
+          `<li class="plain-item weakness-item">${esc(s)}</li>`).join('') + '</ul>'
+      : '<div class="empty-state">No significant weaknesses found.</div>';
+
+    /* Suggestions */
+    suggestList.innerHTML = data.suggestions?.length
+      ? '<ul class="plain-list">' + data.suggestions.map(s =>
+          `<li class="plain-item suggest-item">${esc(s)}</li>`).join('') + '</ul>'
+      : '<div class="empty-state">No suggestions — resume looks well-aligned.</div>';
+
+    /* Raw JSON */
+    rawAnalysis.textContent = JSON.stringify(data, null, 2);
+
+    /* Activate tab on first result */
+    document.querySelector('.tab[data-tab="missing"]').click();
+  }
+
+  /* ── Reset ── */
+  resetBtn.addEventListener('click', () => {
+    fileNameEl.style.display = 'none';
+    fileNameEl.textContent = '';
+    formStatus.innerHTML = '';
+    scoreNum.textContent = '—';
+    scoreUnit.textContent = '';
+    scoreReasoning.textContent = 'Upload a resume and job description to begin.';
+    scoreTag.innerHTML = '';
+    meterArc.style.strokeDashoffset = '314.16';
+    meterArc.style.stroke = 'var(--accent)';
+    progressFill.style.width = '0%';
+    missingList.innerHTML  = '<div class="empty-state">Run an analysis to see results.</div>';
+    matchingList.innerHTML = '<div class="empty-state">Run an analysis to see results.</div>';
+    weaknessList.innerHTML = '<div class="empty-state">Run an analysis to see results.</div>';
+    suggestList.innerHTML  = '<div class="empty-state">Run an analysis to see results.</div>';
+    rawAnalysis.textContent = 'Results will appear here after analysis.';
+  });
+
+  /* ── Submit ── */
+  uploadForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    formStatus.innerHTML = '';
+
+    if (!resumeInput.files.length) {
+      formStatus.innerHTML = '<span class="msg-err">Please attach a PDF resume.</span>'; return;
+    }
+    if (!document.getElementById('job_description').value.trim()) {
+      formStatus.innerHTML = '<span class="msg-err">Please enter a job description.</span>'; return;
+    }
+
+    setLoading(true);
+    try {
+      const resp = await fetch('/analyze', { method: 'POST', body: new FormData(uploadForm) });
+      const text = await resp.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        let e = new Error('The server returned an invalid response (often caused by a timeout or server overload). Please try again.');
+        e.rawText = text;
+        throw e;
+      }
+      if (!resp.ok) throw new Error(data.error || 'Server error ' + resp.status);
+      renderInsights(data);
+      formStatus.innerHTML = '<span class="msg-ok">✓ Analysis complete</span>';
+    } catch (err) {
+      formStatus.innerHTML = `<span class="msg-err">${esc(err.message)}</span>`;
+      rawAnalysis.textContent = err.rawText || err.message;
+    } finally {
+      setLoading(false);
+    }
+  });
+</script>
+</body>
+</html>

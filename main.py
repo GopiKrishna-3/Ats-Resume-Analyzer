@@ -133,7 +133,7 @@ def run_ats_analysis(resume_text: str, jd_text: str) -> dict:
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             contents=prompt,
         )
     except Exception as e:
@@ -231,7 +231,7 @@ def analyze_resume():
     except RuntimeError as e:
         error_msg = str(e)
         if "429" in error_msg or "quota" in error_msg.lower() or "exhausted" in error_msg.lower():
-            friendly_msg = f"Our AI is currently taking a breather! We've hit our free-tier limits. Please wait 60 seconds and try again. [DEBUG RAW ERROR: {error_msg}]"
+            friendly_msg = "Our AI is currently taking a breather! We've hit our free-tier limits. Please wait 60 seconds and try again."
             return jsonify({"error": friendly_msg}), 429
         return jsonify({"error": error_msg}), 502
 
